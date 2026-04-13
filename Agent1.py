@@ -32,6 +32,7 @@ def get_watsonx_model():
         GenParams.DECODING_METHOD: "greedy",
         GenParams.MAX_NEW_TOKENS: 1024,
         GenParams.TEMPERATURE: 0.0, 
+        GenParams.STOP_SEQUENCES: ["\n\nFound", "\n\nNote:", "[END OF RESPONSE]"]
     }
     
     # Llama 3 70B is excellent at strict JSON and logic routing
@@ -108,16 +109,18 @@ Format your response exactly like this:
 Found [X] highly relevant trials for you. Here are the top matches:
 
 1. [BriefTitle] 
+   - Summary: [Brief Summary] Summarize the trial in 1-2 sentences, focusing on the intervention and outcomes.
+   - Interventions: [Interventions]
    - Phase: [Phases]
    - Location: [Summarize the locations. If the user asked for a specific place, ONLY list that specific hospital/city. If they didn't ask for a location, just say "Multiple global sites" or list the top 2 cities and add "and others". NEVER list more than 2 locations.]
-   - Relevance Score: [RelevanceScore]
    - ID: [_id]
+   - Link: [StudyURL]
 
 CRITICAL RULES:
 1. OUTPUT ONLY THE FINAL RESPONSE. 
 2. DO NOT include any internal thoughts, self-corrections, or meta-commentary.
 3. DO NOT use phrases like "Note:", "Here is the revised response", or discuss your formatting. 
-4. Once you output the list of trials, STOP generating text immediately.
+4. After you print the Link for the final trial, you MUST immediately print exactly "[END OF RESPONSE]" on a new line and stop.
 
 CRITICAL INSTRUCTION: Stop generating text immediately after printing the final trial ID. Do not write any closing remarks or repeat the list.
 """
@@ -146,7 +149,7 @@ def run_cloudant_and_rank(routing_data):
             db=CLOUDANT_DB_NAME,
             selector=mandatory_query,
             limit=500,
-            fields=["_id", "BriefTitle", "Locations", "Phases", "Sex", "Age"] 
+            fields=["_id", "BriefTitle", "Locations", "Phases", "Sex", "Age", "StudyURL", "Interventions", "Brief Summary"]
         ).get_result()
 
         docs = response.get('docs', [])
