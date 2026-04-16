@@ -30,7 +30,7 @@ def get_watsonx_model():
     # We use a low temperature for strict, reliable JSON generation
     parameters = {
         GenParams.DECODING_METHOD: "greedy",
-        GenParams.MAX_NEW_TOKENS: 1024,
+        GenParams.MAX_NEW_TOKENS: 4096,
         GenParams.TEMPERATURE: 0.0, 
         GenParams.STOP_SEQUENCES: ["\n\nFound", "\n\nNote:", "[END OF RESPONSE]"]
     }
@@ -55,47 +55,42 @@ fields:
 _id: string
 OverallStatus: string set to in one of the following: UNKNOWN, RECRUITING, NOT_YET_RECRUITING, ACTIVE_NOT_RECRUITING, ENROLLING_BY_INVITATION, AVAILABLE, APPROVED_FOR_MARKETING
 StudyType: string (always set to "INTERVENTIONAL")
-Conditions: string uses regex for matching (e.g., "(?i)Congenital Adrenal Hyperplasia")
+Conditions: string uses regex for matching (e.g., "(?i)Type 2 Diabetes|Hyperglycemia")
 Sex: string (MALE, FEMALE, or ALL)
 Age: string ((CHILD), (ADULT), (OLDER_ADULT), (ADULT, OLDER_ADULT), (CHILD, ADULT), (CHILD, ADULT, OLDER_ADULT), )
-Phases: string (EARLY_PHASE1, PHASE1, PHASE2, PHASE3, PHASE4, PHASE1 | PHASE2, PHASE2 | PHASE3) use in if mentioned in the user prompt
-Locations: string (e.g., Boston, Maryland) use regex for matching if mentioned in the user prompt
-Interventions: string (e.g., specific drug names or procedures) use regex for matching if mentioned in the user prompt
-PrimaryOutcomes: string (e.g., "Change in 17-hydroxyprogesterone levels") 
-SecondaryOutcomes: string (e.g., "Incidence of adrenal crisis") 
-OtherOutcomes: string (e.g., "Quality of life assessments") 
-For all three outcome measure fields, use regex for matching if the user mentions specific outcomes they care about.
+Phases: string (EARLY_PHASE1, PHASE1, PHASE2, PHASE3, PHASE4, PHASE1 | PHASE2, PHASE2 | PHASE3)
+Locations: string (e.g., Boston, Maryland) 
+Interventions: string (e.g., Metformin, Insulin)
+PrimaryOutcomes, SecondaryOutcomes, OtherOutcomes: string 
 </schema>
 
 Rules:
-1. MEDICAL DEALBREAKERS (Conditions, Age, Sex, Study Type, StudyStatus) MUST go in the "mandatory" object using Mango Query syntax (e.g., {"$regex": "(?i)cancer"}).
-2. LOGISTICAL PREFERENCES (Locations, Phases, Brief Summary, Interventions) MUST go in the "optional" object as raw Regex strings (e.g., "(?i)Boston").
+1. MEDICAL DEALBREAKERS (Conditions, Age, Sex, Study Type, StudyStatus) MUST go in the "mandatory" object using Mango Query syntax. Use pipe-separated keywords in regex to ensure we capture the maximum number of matches (e.g., "(?i)Diabetes|T2DM").
+2. LOGISTICAL PREFERENCES (Locations, Phases, Brief Summary, Interventions) MUST go in the "optional" object as raw Regex strings.
 3. Only output the JSON inside <JSON></JSON> tags. Nothing else.
 
 Example Output:
-User Prompt "I am looking for an actively recruiting trial for a female child with Congenital Adrenal Hyperplasia. I would prefer an early-stage trial, maybe Phase 1 or Phase 2, ideally located around Boston or New York. It would be great if the intervention involves Hydrocortisone, and I really want the outcome to track 'bone age' or 'growth'."
+User Prompt "I am looking for an actively recruiting trial for a male adult with Type 2 Diabetes. I would prefer a Phase 3 trial, ideally located in Maryland or Virginia. I'm interested in trials involving GLP-1 agonists and tracking A1C levels."
 JSON Output:
 {
     "mandatory": {
         "OverallStatus": "RECRUITING",
         "StudyType": "INTERVENTIONAL",
         "Conditions": {
-            "$regex": "(?i)Congenital Adrenal Hyperplasia"
+            "$regex": "(?i)Type 2 Diabetes|Hyperglycemia|T2DM"
         },
         "Sex": {
-            "$in": ["FEMALE", "ALL"]
+            "$in": ["MALE", "ALL"]
         },
         "Age": {
-            "$regex": "(?i)CHILD"
+            "$regex": "(?i)ADULT"
         }
     },
     "optional": {
-        "Phases": "(?i)PHASE1|PHASE2",
-        "Locations": "(?i)Boston|New York",
-        "Interventions": "(?i)Hydrocortisone",
-        "PrimaryOutcomes": "(?i)bone age|growth",
-        "SecondaryOutcomes": "(?i)bone age|growth",
-        "OtherOutcomes": "(?i)bone age|growth",
+        "Phases": "(?i)PHASE3",
+        "Locations": "(?i)Maryland|Virginia",
+        "Interventions": "(?i)GLP-1|Semaglutide",
+        "PrimaryOutcomes": "(?i)A1C|HbA1c"
     }
 }
 </JSON>
@@ -105,24 +100,23 @@ comprehension_prompt = """You are a clinical trial matching assistant. You will 
 The data contains the top-ranked trials based on their preferences. 
 Reply based ONLY on the data provided. Do not invent trials.
 
+CRITICAL: You MUST list EVERY trial provided in the DATA, up to 20 results. If the data contains 20 trials, you must display all 20.
+
 Format your response exactly like this:
 Found [X] highly relevant trials for you. Here are the top matches:
 
 1. [BriefTitle] 
-   - Summary: [Brief Summary] Summarize the trial in 1-2 sentences, focusing on the intervention and outcomes.
+   - Summary: [Brief Summary] Summarize the trial in 1-2 sentences.
    - Interventions: [Interventions]
    - Phase: [Phases]
-   - Location: [Summarize the locations. If the user asked for a specific place, ONLY list that specific hospital/city. If they didn't ask for a location, just say "Multiple global sites" or list the top 2 cities and add "and others". NEVER list more than 2 locations.]
+   - Location: [Summarize the locations. Limit to top 2 specific cities/hospitals mentioned in the data.]
    - ID: [_id]
    - Link: [StudyURL]
 
 CRITICAL RULES:
 1. OUTPUT ONLY THE FINAL RESPONSE. 
-2. DO NOT include any internal thoughts, self-corrections, or meta-commentary.
-3. DO NOT use phrases like "Note:", "Here is the revised response", or discuss your formatting. 
-4. After you print the Link for the final trial, you MUST immediately print exactly "[END OF RESPONSE]" on a new line and stop.
-
-CRITICAL INSTRUCTION: Stop generating text immediately after printing the final trial ID. Do not write any closing remarks or repeat the list.
+2. DO NOT include meta-commentary or "Note" sections.
+3. After you print the Link for the final trial, you MUST immediately print exactly "[END OF RESPONSE]" on a new line and stop.
 """
 
 # 4. Chain Functions
@@ -133,101 +127,52 @@ def generate_query_json(question):
     return response
 
 def run_cloudant_and_rank(routing_data):
-    """Executes the Fetch & Rank logic against Cloudant."""
-    authenticator = IAMAuthenticator(CLOUDANT_API_KEY)
+    authenticator = IAMAuthenticator(os.getenv("CLOUDANT_API_KEY"))
     client = CloudantV1(authenticator=authenticator)
-    client.set_service_url(CLOUDANT_URL)
+    client.set_service_url(os.getenv("CLOUDANT_URL"))
 
     mandatory_query = routing_data.get("mandatory", {})
     optional_prefs = routing_data.get("optional", {})
+    target_location = optional_prefs.get("Locations", "").replace("(?i)", "")
 
-    print(f"Executing Cloudant Fetch with: {mandatory_query}")
-    
     try:
-        # Step 1: Fetch
         response = client.post_find(
-            db=CLOUDANT_DB_NAME,
+            db=os.getenv("CLOUDANT_DB_NAME"),
             selector=mandatory_query,
             limit=500,
             fields=["_id", "BriefTitle", "Locations", "Phases", "Sex", "Age", "StudyURL", "Interventions", "Brief Summary"]
         ).get_result()
 
         docs = response.get('docs', [])
-        total_matches = len(docs)
-        
-        if total_matches == 0:
-            return 0, []
-
-        # Step 2: Rank
         scored_trials = []
         for doc in docs:
             score = 0
-            # Check each optional preference against the document fields
-            for field, regex_pattern in optional_prefs.items():
-                doc_value = str(doc.get(field, ""))
-                if re.search(regex_pattern, doc_value):
-                    score += 1
+            raw_locs = str(doc.get("Locations", ""))
+            if target_location and re.search(target_location, raw_locs, re.IGNORECASE):
+                # Clean locations to only show relevant ones for Agent 2's context
+                matches = re.findall(rf"[^|]*{target_location}[^|]*", raw_locs, re.IGNORECASE)
+                doc["Locations"] = " | ".join(matches[:2])
+                score += 10
             
+            for field, pattern in optional_prefs.items():
+                if field != "Locations" and re.search(str(pattern), str(doc.get(field, "")), re.IGNORECASE):
+                    score += 1
             doc["RelevanceScore"] = score
             scored_trials.append(doc)
 
-        # Sort by highest score
         scored_trials.sort(key=lambda x: x["RelevanceScore"], reverse=True)
-        
-        # Return the total count, and just the top 5 matches to keep the LLM context clean
-        return total_matches, scored_trials[:5]
-
+        return scored_trials[:20]
     except Exception as e:
-        print(f"Cloudant Error: {str(e)}")
-        return 0, None
+        print(f"Cloudant Error: {e}")
+        return []
 
-def data_comprehension(question, total_matches, top_docs):
-    """Passes the ranked results back to Watsonx for natural language formatting."""
-    context_string = json.dumps(top_docs, indent=2)
-    formatted_prompt = f"{comprehension_prompt}\n\nQUESTION: {question}\nTOTAL MATCHES: {total_matches}\nDATA: {context_string}\n\nResponse:"
-    
+def agent_1_orchestrator_access(question, client_llm):
+    """The entry point for Orchestrator.py"""
+    formatted_prompt = f"{routing_prompt}\n\nUser Request: {question}\n\nGenerate JSON:"
     response = client_llm.generate_text(prompt=formatted_prompt)
-    return response
-
-def trial_matching_chain(question):
-    """The main orchestration function."""
-    print("1. Generating Database Routing Logic...")
-    llm_output = generate_query_json(question)
     
-    # Extract JSON using Regex
-    pattern = r"<JSON>(.*?)</JSON>"
-    matches = re.findall(pattern, llm_output, re.DOTALL)
-
-    if not matches:
-        return "Sorry, the AI could not parse the search parameters. Please try rephrasing your medical request."
-
-    routing_json = matches[0].strip()
+    match = re.search(r"<JSON>(.*?)</JSON>", response, re.DOTALL)
+    if not match: return []
     
-    try:
-        routing_data = json.loads(routing_json)
-    except json.JSONDecodeError:
-        return "Sorry, there was an error decoding the database parameters."
-
-    print("2. Fetching and Ranking from Cloudant...")
-    total_count, top_docs = run_cloudant_and_rank(routing_data)
-    
-    if top_docs is None:
-        return "Sorry, there was a problem executing the database query."
-    
-    if total_count == 0:
-        return "No clinical trials found matching those strict medical requirements."
-
-    print(f"Found {total_count} viable trials. Formatting output...")
-    
-    print("3. Generating Final Summary...")
-    answer = data_comprehension(question, total_count, top_docs)
-    return answer
-
-if __name__ == "__main__":
-    # Test the Agent Chain
-    question = "I am a male adult with Congenital Adrenal Hyperplasia. I would prefer a Phase 2 trial, ideally somewhere in Maryland."
-    
-    final_answer = trial_matching_chain(question)
-    
-    print("\n================ FINAL RESPONSE ================\n")
-    print(final_answer)
+    routing_data = json.loads(match.group(1).strip())
+    return run_cloudant_and_rank(routing_data)
