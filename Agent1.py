@@ -30,14 +30,14 @@ def get_watsonx_model():
     # We use a low temperature for strict, reliable JSON generation
     parameters = {
         GenParams.DECODING_METHOD: "greedy",
-        GenParams.MAX_NEW_TOKENS: 4096,
+        GenParams.MAX_NEW_TOKENS: 2048,
         GenParams.TEMPERATURE: 0.0, 
         GenParams.STOP_SEQUENCES: ["\n\nFound", "\n\nNote:", "[END OF RESPONSE]"]
     }
     
     # Llama 3 70B is excellent at strict JSON and logic routing
     return ModelInference(
-        model_id="meta-llama/llama-3-3-70b-instruct", 
+        model_id="mistralai/mistral-small-3-1-24b-instruct-2503", 
         params=parameters,
         credentials=credentials,
         project_id=WATSONX_PROJECT_ID

@@ -1,0 +1,320 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+ 
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f5f7fa;
+  color: #1a1a2e;
+}
+ 
+/* ================================
+   Header
+   ================================ */
+ 
+.app-header {
+  background: #0f3460;
+  color: white;
+  padding: 2rem;
+  text-align: center;
+}
+ 
+.app-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+ 
+.app-header p {
+  opacity: 0.8;
+  font-size: 1.1rem;
+}
+ 
+/* ================================
+   Main Layout
+   ================================ */
+ 
+.app-main {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+ 
+/* ================================
+   Search Form
+   ================================ */
+ 
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+ 
+.search-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
+}
+ 
+.search-input:focus {
+  outline: none;
+  border-color: #0f3460;
+}
+ 
+.search-button {
+  padding: 1rem 2rem;
+  background: #0f3460;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  align-self: flex-end;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+ 
+.search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+ 
+.search-button:hover:not(:disabled) {
+  background: #16213e;
+}
+ 
+/* ================================
+   Loading Spinner
+   ================================ */
+ 
+.spinner-container {
+  text-align: center;
+  padding: 3rem;
+}
+ 
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #ddd;
+  border-top-color: #0f3460;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+ 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+ 
+.spinner-container p {
+  color: #666;
+  font-size: 0.95rem;
+}
+ 
+/* ================================
+   Results Section
+   ================================ */
+ 
+.results h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  color: #0f3460;
+  font-weight: 600;
+}
+ 
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+ 
+/* ================================
+   Trial Card
+   ================================ */
+ 
+.trial-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #0f3460;
+  transition: box-shadow 0.2s;
+}
+ 
+.trial-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+ 
+.trial-header {
+  margin-bottom: 0.8rem;
+}
+ 
+.trial-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+ 
+.trial-rank {
+  background: #0f3460;
+  color: white;
+  padding: 0.15rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+ 
+.trial-id {
+  display: inline-block;
+  background: #e8f0fe;
+  color: #0f3460;
+  padding: 0.15rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+ 
+.trial-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1a1a2e;
+  margin-bottom: 0.4rem;
+}
+ 
+.registry-link {
+  display: inline-block;
+  color: #0f3460;
+  font-size: 0.85rem;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 0.8rem;
+}
+ 
+.registry-link:hover {
+  text-decoration: underline;
+}
+ 
+/* ================================
+   Trial Preview (collapsed)
+   ================================ */
+ 
+.trial-preview {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+ 
+/* ================================
+   Trial Full Analysis (expanded)
+   ================================ */
+ 
+.trial-full {
+  padding: 0.5rem 0 1rem;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 0.5rem;
+}
+ 
+.trial-full h3 {
+  font-size: 0.95rem;
+  color: #0f3460;
+  margin: 1.2rem 0 0.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.3rem;
+}
+ 
+.trial-full h4 {
+  font-size: 0.9rem;
+  color: #333;
+  margin: 0.8rem 0 0.3rem;
+}
+ 
+.trial-full p {
+  line-height: 1.7;
+  color: #333;
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+ 
+.trial-full ul {
+  padding-left: 1.5rem;
+  margin-bottom: 0.8rem;
+}
+ 
+.trial-full li {
+  line-height: 1.7;
+  color: #333;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+ 
+.trial-full strong {
+  color: #0f3460;
+  font-weight: 600;
+}
+ 
+.trial-full hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 1rem 0;
+}
+ 
+.trial-full code {
+  background: #f5f5f5;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+}
+ 
+/* ================================
+   Expand Button
+   ================================ */
+ 
+.expand-button {
+  background: none;
+  border: 1px solid #0f3460;
+  color: #0f3460;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+ 
+.expand-button:hover {
+  background: #0f3460;
+  color: white;
+}
+ 
+/* ================================
+   Error and Empty States
+   ================================ */
+ 
+.error {
+  color: #c0392b;
+  text-align: center;
+  padding: 2rem;
+  background: #fdf0f0;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
+}
+ 
+.no-results {
+  text-align: center;
+  color: #666;
+  padding: 3rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
