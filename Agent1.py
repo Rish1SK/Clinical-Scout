@@ -37,7 +37,7 @@ def get_watsonx_model():
     
     # Llama 3 70B is excellent at strict JSON and logic routing
     return ModelInference(
-        model_id="mistralai/mistral-small-3-1-24b-instruct-2503", 
+        model_id="meta-llama/llama-3-3-70b-instruct", 
         params=parameters,
         credentials=credentials,
         project_id=WATSONX_PROJECT_ID
