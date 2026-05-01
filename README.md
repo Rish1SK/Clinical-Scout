@@ -31,7 +31,7 @@ Patient Narrative (Plain Language)
             |
             v
     +----------------+
-    |    AGENT 1     |  IBM watsonx.ai Mistral Small
+    |    AGENT 1     |  
     |  Structured    |  Extracts structured data from narrative
     |  Extraction    |  Executes Mango Query against IBM Cloudant
     |  & Filtering   |  Ranks results by location + preference score
@@ -41,7 +41,7 @@ Patient Narrative (Plain Language)
             |
             v
     +----------------+
-    |    AGENT 2     |  IBM watsonx.ai Llama 3 70B
+    |    AGENT 2     |  
     |   Semantic     |  Fetches full criteria from ClinicalTrials.gov API
     |   Reasoning    |  Reasons through eligibility against patient profile
     |  & Analysis    |  Generates plain-language eligibility assessment
@@ -63,8 +63,7 @@ Patient Narrative (Plain Language)
 
 | Layer | Technology |
 |---|---|
-| Agent 1 LLM | IBM watsonx.ai — Mistral Small 3.1 24B |
-| Agent 2 LLM | IBM watsonx.ai — Llama 3.3 70B Instruct |
+| LLM | IBM watsonx.ai — Llama 3.3 70B Instruct |
 | Database | IBM Cloudant (NoSQL) — clinical trials dataset |
 | Live Trial Data | ClinicalTrials.gov API v2 |
 | Backend Framework | FastAPI (Python) |
